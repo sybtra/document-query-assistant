@@ -1,0 +1,46 @@
+# Docker Compose
+version: '3.9'
+
+services:
+  frontend:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    ports:
+      - "7860:7860"
+    depends_on:
+      - backend
+    networks:
+      - app-net
+    env_file:
+      - .env
+
+  backend:
+    build:
+      context: ./back
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    networks:
+      - app-net
+    env_file:
+      - .env
+
+  ollama:
+    image: ollama/ollama:latest
+    environment:
+      - MODEL_NAME=${APP_MODEL}
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/ollama/data
+    networks:
+      - app-net
+    env_file:
+      - .env
+
+volumes:
+  ollama_data:
+networks:
+  app-net:
+    driver: bridge
