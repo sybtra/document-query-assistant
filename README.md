@@ -32,8 +32,8 @@ This project is a ChatBot application that integrates a FastAPI backend, a Gradi
 
 #### 1. Clone the Repository
 ```bash
-git clone git@github.com:sybtra/expert-maintenance-assistant.git
-cd expert-maintenance-assistant
+git clone git@github.com:sybtra/document-query-assistant.git
+cd document-query-assistant
 ```
 
 #### 2. Build and Run Containers
