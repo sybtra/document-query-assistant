@@ -6,12 +6,14 @@ services:
     build:
       context: ./front
       dockerfile: Dockerfile
+    container_name: frontend
     ports:
       - "7860:7860"
     depends_on:
       - backend
-    networks:
-      - app-net
+    restart: unless-stopped
+    # networks:
+    #   - app-net
     env_file:
       - .env
 
@@ -19,28 +21,35 @@ services:
     build:
       context: ./back
       dockerfile: Dockerfile
+    container_name: backend
     ports:
       - "8000:8000"
-    networks:
-      - app-net
+    restart: unless-stopped
+    # networks:
+    #   - app-net
     env_file:
       - .env
 
   ollama:
     image: ollama/ollama:latest
-    environment:
-      - MODEL_NAME=${APP_MODEL}
+    container_name: ollama
     ports:
-      - "11434:11434"
+        - 11434:11434
     volumes:
-      - ollama_data:/ollama/data
-    networks:
-      - app-net
+        - ./ollama/ollama:/root/.ollama
+        - ./entrypoint.sh:/entrypoint.sh
+        - ollama_data:/ollama/data
+    pull_policy: always
+    tty: true
+    entrypoint: ["/usr/bin/bash", "/entrypoint.sh"]
+    restart: unless-stopped
+    # networks:
+    #   - app-net
     env_file:
       - .env
 
 volumes:
   ollama_data:
-networks:
-  app-net:
-    driver: bridge
+# networks:
+#   app-net:
+#     driver: bridge

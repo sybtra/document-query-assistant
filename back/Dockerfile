@@ -1,7 +1,7 @@
 # For more information, please refer to https://aka.ms/vscode-docker-python
 FROM python:3-slim
 
-EXPOSE 8000
+# EXPOSE 8000
 
 # Keeps Python from generating .pyc files in the container
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -11,17 +11,12 @@ ENV PYTHONUNBUFFERED=1
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
-    build-essential \
-    gcc \
-    python3-dev \
-    libtesseract-dev \
-    tesseract-ocr \
+    build-essential gcc python3-dev libtesseract-dev tesseract-ocr libmagic1 libmagic-dev telnet \
     && rm -rf /var/lib/apt/lists/*
 
 # Install pip requirements
 COPY requirements.txt .
-RUN python -m pip install --upgrade pip && \
-    python -m pip install -r requirements.txt
+RUN python -m pip install --upgrade pip && python -m pip install -r requirements.txt
 
 WORKDIR /app
 COPY . /app
@@ -30,6 +25,5 @@ COPY . /app
 # For more info, please refer to https://aka.ms/vscode-docker-python-configure-containers
 RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /app
 USER appuser
-
-# During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "-k", "uvicorn.workers.UvicornWorker", "main:app"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--log-level", "debug"]
+# CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
