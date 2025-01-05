@@ -12,8 +12,8 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
-    # networks:
-    #   - app-net
+    networks:
+      - front-back
     env_file:
       - .env
 
@@ -27,8 +27,9 @@ services:
     restart: unless-stopped
     volumes:
       - chroma_data:/app/data/chroma
-    # networks:
-    #   - app-net
+    networks:
+      - front-back
+      - back-ollama
     env_file:
       - .env
 
@@ -36,7 +37,7 @@ services:
     image: ollama/ollama:latest
     container_name: ollama
     ports:
-        - 11434:11434
+        - 11434
     volumes:
         - ./ollama/ollama:/root/.ollama
         - ./entrypoint.sh:/entrypoint.sh
@@ -45,14 +46,16 @@ services:
     tty: true
     entrypoint: ["/usr/bin/bash", "/entrypoint.sh"]
     restart: unless-stopped
-    # networks:
-    #   - app-net
+    networks:
+      - back-ollama
     env_file:
       - .env
 
 volumes:
   ollama_data:
   chroma_data:
-# networks:
-#   app-net:
-#     driver: bridge
+networks:
+  front-back:    # Réseau entre frontend et backend
+    driver: bridge
+  back-ollama:   # Réseau entre backend et ollama
+    driver: bridge

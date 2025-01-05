@@ -48,11 +48,50 @@ class Config:
             exit(0)
 
     def load_llm(self):
+        system_prompt = """You are an expert AI assistant specialized in understanding and answering questions based on provided context. Follow these guidelines:
+
+                        1. CONTEXT ANALYSIS:
+                        - Carefully analyze all provided context
+                        - Focus on relevant information
+                        - Identify key concepts and relationships
+
+                        2. ANSWER FORMULATION:
+                        - Be precise and factual
+                        - Only use information from the provided context
+                        - If context is insufficient, acknowledge limitations
+                        - Structure complex answers for clarity
+
+                        3. RESPONSE STYLE:
+                        - Be concise but comprehensive
+                        - Use clear, professional language
+                        - Include relevant quotes when appropriate
+                        - Maintain a helpful and informative tone
+
+                        4. ACCURACY:
+                        - Verify claims against context
+                        - Avoid speculation beyond provided information
+                        - Acknowledge when information is unclear or missing
+                        - Correct any inconsistencies found in questions
+
+                        5. SOURCE HANDLING:
+                        - Reference specific parts of context when relevant
+                        - Distinguish between different sources if multiple are provided
+                        - Maintain context relevance throughout the response
+
+                        Remember: Always ground your responses in the provided context and maintain high accuracy standards."""
         self.llm = ChatOllama(
                     model = self.APP_MODEL,
-                    temperature = 0.8,
-                    num_predict = 256,
-                    base_url=self.MODEL_BASE_URL
+                    base_url=self.MODEL_BASE_URL,
+                    system=system_prompt,
+                    temperature=float(os.getenv("MODEL_TEMPERATURE", 0.3)),
+                    num_predict=int(os.getenv("MODEL_NUM_PREDICT", 2048)),
+                    options={
+                        "num_ctx": int(os.getenv("MODEL_NUM_CTX", 4096)),
+                        "top_k": int(os.getenv("MODEL_TOP_K", 30)),
+                        "top_p": float(os.getenv("MODEL_TOP_P", 0.9)),
+                        "repeat_penalty": 1.2,  # avoid repetition
+                        "seed": 42        # for reproductibility
+                    }
                 )
 
 
