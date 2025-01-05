@@ -11,7 +11,8 @@ class Config:
         self.NEEDED_VARS = [
             "API_URL",
             "APP_MODEL",
-            "DB_NAME"
+            "DB_NAME",
+            "MODEL_BASE_URL"
         ]
 
 
@@ -19,6 +20,7 @@ class Config:
         self.API_URL = None
         self.APP_MODEL = None
         self.DB_NAME = None
+        self.MODEL_BASE_URL = None
 
         self.llm = None
 
@@ -33,6 +35,7 @@ class Config:
 
             cls._instance.APP_MODEL = os.getenv("APP_MODEL")
             cls._instance.DB_NAME = os.getenv("DB_NAME")
+            cls._instance.MODEL_BASE_URL = os.getenv("MODEL_BASE_URL")
 
             cls._instance.validate()
             cls._instance.load_llm()
@@ -49,6 +52,7 @@ class Config:
                     model = self.APP_MODEL,
                     temperature = 0.8,
                     num_predict = 256,
+                    base_url=self.MODEL_BASE_URL
                 )
 
 

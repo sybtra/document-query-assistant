@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, File, UploadFile
 from typing import List
-
+import loguru
 from utils.app_langchain.data_parser import parse_data
 from utils.app_langchain.process_vector import process_vector
 from langchain_ollama import OllamaEmbeddings
@@ -8,6 +8,7 @@ from langchain_chroma import Chroma
 import os
 
 router = APIRouter()
+
 
 @router.post("/ingest/{collection_name}", tags=["Documents"])
 async def process_ingest(
@@ -29,8 +30,6 @@ async def process_ingest(
     """
     try:
         embeddings = OllamaEmbeddings(model=os.getenv("APP_MODEL"))
-
-        # Remove existing collection if it exists
         if os.path.exists(os.getenv("DB_NAME")):
             Chroma(
                 persist_directory=os.getenv("DB_NAME"),
@@ -42,7 +41,8 @@ async def process_ingest(
         for file in files:
             parsed_data = await parse_data(file)
             await process_vector(parsed_data, collection_name=collection_name)
-
         return {"Message": f"Collection {collection_name} successfully created for {len(files)} files."}
     except Exception as e:
+        loguru.logger.exception("Full traceback:")
+
         raise HTTPException(status_code=500, detail=f"Server error: {str(e)}") from e

@@ -1,3 +1,4 @@
+import loguru
 from fastapi import APIRouter, HTTPException, Depends, Body
 from langchain.memory import ConversationBufferMemory
 from langchain_chroma import Chroma
@@ -29,15 +30,29 @@ async def process_chat(
     """
     try:
         memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
+        embeddings = OllamaEmbeddings(
+            model=config.APP_MODEL,
+            base_url="http://ollama:11434"
+        )
         vector_store = Chroma(
             collection_name=collection_name,
-            embedding_function=OllamaEmbeddings(model=config.APP_MODEL),
+            embedding_function=embeddings,
             persist_directory=config.DB_NAME
         )
+        
         retriever = vector_store.as_retriever()
-        conversation_chain = ConversationalRetrievalChain.from_llm(llm=config.llm, retriever=retriever, memory=memory)
+        
+        conversation_chain = ConversationalRetrievalChain.from_llm(
+            llm=config.llm,
+            retriever=retriever,
+            memory=memory,
+            verbose=True  # Ajouter ceci pour plus de détails
+        )
+        
         response = conversation_chain.invoke({"question": query})
-
+        
         return response["answer"]
+        
     except Exception as e:
+        loguru.logger.exception("Full traceback:")
         raise HTTPException(status_code=500, detail=f"Server error: {str(e)}") from e

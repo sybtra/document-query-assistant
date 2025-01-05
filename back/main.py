@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from routes import chat, ingest
 
-app = FastAPI(debug=True)
+app = FastAPI()
 
 tags_metadata = [
     {

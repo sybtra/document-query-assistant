@@ -25,6 +25,8 @@ services:
     ports:
       - "8000:8000"
     restart: unless-stopped
+    volumes:
+      - chroma_data:/app/data/chroma
     # networks:
     #   - app-net
     env_file:
@@ -50,6 +52,7 @@ services:
 
 volumes:
   ollama_data:
+  chroma_data:
 # networks:
 #   app-net:
 #     driver: bridge
