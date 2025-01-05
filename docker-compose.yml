@@ -1,4 +1,5 @@
 # Docker Compose
+
 version: '3.9'
 
 services:
@@ -26,7 +27,7 @@ services:
       - "8000:8000"
     restart: unless-stopped
     volumes:
-      - chroma_data:/app/data/chroma
+      - chroma_data:/app/data/chroma  
     networks:
       - front-back
       - back-ollama
@@ -55,7 +56,7 @@ volumes:
   ollama_data:
   chroma_data:
 networks:
-  front-back:    # Réseau entre frontend et backend
+  front-back: 
     driver: bridge
-  back-ollama:   # Réseau entre backend et ollama
+  back-ollama:
     driver: bridge

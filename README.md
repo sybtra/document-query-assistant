@@ -1,107 +1,160 @@
-
-# ChatBot Project with Frontend, Backend, and OCR Functionality
+# Document Query Assistant
 
 ## Overview
-This project is a ChatBot application that integrates a FastAPI backend, a Gradio-based frontend, and OCR capabilities using Tesseract for document processing. The backend leverages LangChain and Ollama for conversational AI, while the frontend offers a user-friendly interface.
+This project is a document query assistant that combines a FastAPI backend with a Gradio frontend, featuring OCR capabilities. It uses LangChain and Ollama for document processing and conversational AI, with a focus on secure inter-service communication.
 
 ## Features
-- **Frontend**: Built with Gradio, providing a clean and interactive interface for document ingestion and chat functionality.
-- **Backend**: Developed with FastAPI to handle document ingestion, chat processing, and OCR capabilities.
-- **OCR Integration**: Tesseract OCR integrated into the backend for text extraction from images and PDFs.
-- **LLM Integration**: Powered by the Llama 3.2 model via Ollama.
+- **Document Processing**: Support for multiple file formats including PDF, DOCX, TXT, HTML with OCR capabilities
+- **Interactive Chat**: Context-aware chatbot interface for querying document content
+- **Secure Architecture**: Isolated service communication with Docker networks
+- **OCR Integration**: Automated text extraction from images and scanned PDFs
+- **LLM Integration**: Powered by Ollama with optimized RAG configuration
 
 ## Project Structure
 ```
 .
 ├── front/
-│   ├── interface.py
+│   ├── interface.py          # Main Gradio application
+│   ├── chat.py         # Chat functionality
+│   ├── ingest.py       # Document ingestion
+│   ├── Dockerfile
 │   ├── requirements.txt
 ├── back/
+│   ├── routes/
+│   │   ├── chat.py     # Chat endpoints
+│   │   ├── ingest.py   # Ingestion endpoints
 │   ├── utils/
-│   ├── config.py
+│   │   ├── app_langchain/
+│   │   │   ├── data_parser.py
+│   │   │   ├── process_vector.py
+│   ├── config.py       # Application configuration
+│   ├── Dockerfile
+│   ├── requirements.txt
 ├── docker-compose.yml
+├── .env.example
 ```
+
+## Network Architecture
+The application uses isolated Docker networks for security:
+- `front-back`: Communication between frontend and backend
+- `back-ollama`: Communication between backend and Ollama
+- External access only to frontend (7860) and backend API (8000)
 
 ## Setup Instructions
 
 ### Prerequisites
-- Docker and Docker Compose installed.
-- Python 3.9+ installed locally for development purposes (optional).
+- Docker and Docker Compose
+- Git
 
-### Installation Steps
+### Installation
 
-#### 1. Clone the Repository
+1. **Clone the Repository**
 ```bash
-git clone git@github.com:sybtra/document-query-assistant.git
+git clone https://github.com/sybtra/document-query-assistant.git
 cd document-query-assistant
 ```
 
-#### 2. Build and Run Containers
-Run the following command to build and start all services:
-```bash
-docker-compose up --build
+2. **Configure Environment**
+Create a `.env` file:
+```env
+API_URL=http://backend:8000
+DB_NAME=/app/data/chroma
+APP_MODEL=llama2
+MODEL_BASE_URL=http://ollama:11434
 ```
 
-This will:
-- Launch the frontend on port `7860`.
-- Launch the backend on port `8000`.
-- Launch the Ollama service for the Llama 3.2 model on port `11434`.
+3. **Build and Run**
+```bash
+docker compose up --build
+```
 
-#### 3. Access the Application
-- Frontend: [http://localhost:7860](http://localhost:7860)
-- Backend API Documentation: [http://localhost:8000/docs](http://localhost:8000/docs)
+### Accessing the Application
+- Frontend Interface: http://localhost:7860
+- API Documentation: http://localhost:8000/docs
 
-## Backend Details
+## API Endpoints
 
-### OCR Capability
-The backend uses Tesseract OCR for:
-- Extracting text from images (PNG, JPEG, BMP, etc.).
-- Extracting text from PDF documents when standard parsing fails.
+### Document Ingestion
+- **Endpoint**: `POST /ingest/{collection_name}`
+- **Purpose**: Upload and process documents
+- **Supported Formats**:
+  - Text: `.txt`, `.json`
+  - Documents: `.pdf`, `.docx`, `.doc`
+  - Web: `.html`, `.htm`
+  - Images (via OCR): `.png`, `.jpg`, `.jpeg`, `.tiff`, `.bmp`
 
-### API Endpoints
-1. **Document Ingestion**:
-   - Endpoint: `POST /ingest/{collection_name}`
-   - Description: Upload files to create or update a document collection.
-   - Supported File Types: PDF, DOC, DOCX, TXT, HTML, PNG, JPEG, etc.
+### Chat Interface
+- **Endpoint**: `POST /chat/{collection_name}`
+- **Purpose**: Process queries against ingested documents
+- **Features**: 
+  - Context-aware responses
+  - RAG-optimized configuration
+  - Conversation memory
 
-2. **Chat Processing**:
-   - Endpoint: `POST /chat/{collection_name}`
-   - Description: Process user queries against an ingested collection.
-
-## Adding New Models or Capabilities
-To integrate additional models or extend functionality, modify the `config.py` file and update the relevant services in `docker-compose.yml`.
-
-## Development Notes
+## Development
 
 ### Backend Requirements
-Ensure the following dependencies are listed in `back/requirements.txt`:
 ```text
 fastapi
+uvicorn
+python-multipart
 langchain
+langchain_community
+langchain_core
 langchain_chroma
 langchain_ollama
 pytesseract
 pdf2image
-Pillow
 python-magic
+python-dotenv
+loguru
 ```
 
 ### Frontend Requirements
-Ensure the following dependencies are listed in `front/requirements.txt`:
 ```text
-gr
+gradio
+python-dotenv
 requests
 ```
 
-### Troubleshooting
-- **Tesseract OCR Missing**:
-  Ensure Tesseract is installed in the backend container by verifying the `Dockerfile.backend` includes:
-  ```Dockerfile
-  RUN apt-get update && apt-get install -y tesseract-ocr libtesseract-dev && rm -rf /var/lib/apt/lists/*
-  ```
+## Docker Configuration
 
-- **Service Ports Not Available**:
-  Ensure no other processes are using the specified ports (7860, 8000, 11434).
+### Services
+1. **Frontend**
+   - Port: 7860
+   - Network: front-back
+   - Dependencies: backend
+
+2. **Backend**
+   - Port: 8000
+   - Networks: front-back, back-ollama
+   - Volumes: chroma_data
+
+3. **Ollama**
+   - Internal Port: 11434
+   - Network: back-ollama
+   - Volumes: ollama_data
+
+## Troubleshooting
+
+### Common Issues
+1. **Connection Refused**
+   - Verify network configurations in docker-compose.yml
+   - Check service health status
+   - Ensure correct environment variables
+
+2. **File Processing Errors**
+   - Verify file format support
+   - Check OCR configuration
+   - Ensure sufficient permissions
+
+### Maintenance
+- Regular model updates via Ollama
+- Vector store maintenance
+- Log monitoring
 
 ## License
-This project is licensed under the MIT License.
+MIT License
+
+## Repository
+[https://github.com/sybtra/document-query-assistant.git](https://github.com/sybtra/document-query-assistant.git)
